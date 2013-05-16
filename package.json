@@ -1,0 +1,30 @@
+{
+  "name": "connect-reqcontext",
+  "version": "0.0.0",
+  "description": "Globally accessible request context for connect",
+  "main": "lib/index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "coffee-script": "~1.6.x",
+    "mocha": "",
+    "chai": "",
+    "semver": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/andreypopp/connect-reqcontext.git"
+  },
+  "homepage": "https://github.com/andreypopp/connect-reqcontext",
+  "keywords": [
+    "connect",
+    "express",
+    "context",
+    "threadlocal"
+  ],
+  "author": {
+    "name": "Andrey Popp",
+    "email": "8mayday@gmail.com",
+    "url": "http://andreypopp.com"
+  },
+  "license": "MIT"
+}
