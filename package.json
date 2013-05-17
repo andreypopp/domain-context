@@ -1,6 +1,6 @@
 {
   "name": "domain-context",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Globally accessible domain-bound contexts",
   "main": "lib/index.js",
   "dependencies": {},
