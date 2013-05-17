@@ -5,6 +5,8 @@
   "main": "lib/index.js",
   "dependencies": {},
   "devDependencies": {
+    "connect": "",
+    "connect-domain": "",
     "coffee-script": "~1.6.x",
     "mocha": "",
     "chai": "",

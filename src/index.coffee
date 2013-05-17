@@ -4,13 +4,14 @@ exports.context = (context, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
   domain.__context__ = if context? then context() else {}
 
-exports.cleanup = (cleanup, domain = require('domain').active) ->
-  throw new Error('no active domain') unless domain?
-  cleanup(domain.__context__) if cleanup? and domain.__context__?
-  domain.__context__ = null
+exports.cleanup = (cleanup, context = null, domain = require('domain').active) ->
+  context = context or domain.__context__
+  cleanup(context) if cleanup? and context?
+  domain.__context__ = null if domain?
 
 exports.onError = (onError, context = null, domain = require('domain').active) ->
-  onError(context or domain.__context__) if onError?
+  context = context or domain.__context__
+  onError(context) if onError?
   domain.__context__ = null
 
 exports.get = (key, domain = require('domain').active) ->
@@ -25,8 +26,13 @@ exports.run = (options, func) ->
   {context, cleanup, onError} = options
   domain = options.domain or require('domain').active
   throw new Error('no active domain') unless domain
-  domain.on 'dispose', -> exports.cleanup(cleanup, domain)
-  domain.on 'error', -> exports.onError(onError, null, domain)
+  domain.on 'dispose', ->
+    exports.cleanup(cleanup, domain)
+  domain.on 'error', ->
+    if onError?
+      exports.onError(onError, null, domain)
+    else
+      exports.cleanup(cleanup, domain)
   exports.context(context, domain)
   try
     domain.bind(func, true)()
@@ -60,6 +66,9 @@ exports.middleware = (context, cleanup) ->
 exports.middlewareOnError = (onError) ->
   (err, req, res, next) ->
     {onError} = onError if typeof onError != 'function'
-    exports.onError(onError, req.__context__)
+    if onError?
+      exports.onError(onError, req.__context__)
+    else
+      exports.cleanup(onError, req.__context__)
     req.__context__ = null
     next(err)

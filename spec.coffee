@@ -1,5 +1,7 @@
+request = require 'supertest'
 {equal, ok} = require 'assert'
-{run, runInNewDomain, get} = require './src/index'
+{run, runInNewDomain, get,
+  middleware, middlewareOnError} = require './src/index'
 
 describe 'run()', ->
 
@@ -32,6 +34,15 @@ describe 'run()', ->
     domain = require('domain').create()
     domain.run ->
       run {cleanup: -> cleanupCalled = true}, ->
+    domain.dispose()
+    ok cleanupCalled
+
+  it 'calls cleanup callback on error if no onError is provided', ->
+    cleanupCalled = false
+    domain = require('domain').create()
+    domain.run ->
+      run {cleanup: -> cleanupCalled = true}, ->
+        throw new Error('x')
     domain.dispose()
     ok cleanupCalled
 
@@ -102,5 +113,90 @@ describe 'runInNewDomain()', ->
     parentDomain.dispose()
     ok not disposed
 
-describe.skip 'middleware()', ->
-describe.skip 'middleware() with middlewareOnError()', ->
+describe 'middleware()', ->
+
+  connectDomain = require 'connect-domain'
+  connect = require 'connect'
+  configureApp = (options) ->
+    app = connect()
+    app.use connectDomain()
+    app.use middleware(options)
+    app.use options.handler
+    app.use middlewareOnError(options)
+    app
+
+  it 'allows getting values out of context with get()', (done) ->
+    value = undefined
+    app = configureApp
+      context: -> value: 'x'
+      handler: (req, res) ->
+        value = get('value')
+        res.write('ok')
+        res.end()
+    request(app)
+      .get('/')
+      .expect 200, ->
+        equal value, 'x'
+        done()
+
+  it 'calls cleanup on finish request', (done) ->
+    cleanupCalled = false
+    app = configureApp
+      cleanup: -> cleanupCalled = true
+      handler: (req, res) ->
+        res.write('ok')
+        res.end()
+    request(app)
+      .get('/')
+      .expect 200, ->
+        ok cleanupCalled
+        done()
+
+  it 'calls cleanup on error if no onError is provided', (done) ->
+    cleanupCalled = false
+    app = configureApp
+      cleanup: -> cleanupCalled = true
+      handler: (req, res) ->
+        throw new Error('x')
+    request(app)
+      .get('/')
+      .expect 500, ->
+        ok cleanupCalled
+        done()
+
+  it 'calls onError sync throw', (done) ->
+    onErrorCalled = false
+    app = configureApp
+      onError: -> onErrorCalled = true
+      handler: (req, res) ->
+        throw new Error('x')
+    request(app)
+      .get('/')
+      .expect 500, ->
+        ok onErrorCalled 
+        done()
+
+  it 'calls onError on next(err) call', (done) ->
+    onErrorCalled = false
+    app = configureApp
+      onError: -> onErrorCalled = true
+      handler: (req, res, next) ->
+        next(new Error('x'))
+    request(app)
+      .get('/')
+      .expect 500, ->
+        ok onErrorCalled 
+        done()
+
+  it 'calls onError on async throw', (done) ->
+    onErrorCalled = false
+    app = configureApp
+      onError: -> onErrorCalled = true
+      handler: (req, res, next) ->
+        require('fs').readFile 'non-existent', (err) ->
+          throw err
+    request(app)
+      .get('/')
+      .expect 500, ->
+        ok onErrorCalled 
+        done()
