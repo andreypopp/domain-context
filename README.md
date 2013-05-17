@@ -6,11 +6,11 @@ This middleware can only be used inside an active domain, use
 [connect-domain][].
 
     var connectDomain = require('connect-domain');
-    var connectReqContext = require('connect-reqcontext');
+    var domainContext = require('domain-context');
 
     ...
     app.use(connectDomain());
-    app.use(connectReqContext.requestContext(function() {
+    app.use(domainContext.requestContext(function() {
       // return context you want to attach to the request
       return {
         db: new pg.Client(...)
@@ -24,7 +24,7 @@ This middleware can only be used inside an active domain, use
     });
     ...
     // middleware below is optional if you want custom cleanup on error
-    app.use(connectReqContext.requestContextOnError(function(context) {
+    app.use(domainContext.requestContextOnError(function(context) {
       context.db.query('rollback');
       context.db.end();
     });
@@ -32,10 +32,10 @@ This middleware can only be used inside an active domain, use
 
     // in another file, maybe in models.js or something like this
     // you can access db connection without having access to a request object
-    var connectReqContext = require('connect-reqcontext');
+    var domainContext = require('connect-reqcontext');
 
     function getUserById(id, cb) {
-      connectReqContext.get('db').query("select ...", cb);
+      domainContext.get('db').query("select ...", cb);
     }
 
 
