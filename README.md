@@ -1,7 +1,6 @@
-# connect-reqcontext
+# domain-context
 
-Middleware for Connect which provides globally accessible request context with
-lifecycle hooks.
+Globally accessible domain-bound contexts. Connect middleware included.
 
 This middleware can only be used inside an active domain, use
 [connect-domain][].
