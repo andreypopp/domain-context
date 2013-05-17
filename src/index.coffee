@@ -9,9 +9,9 @@ exports.cleanup = (cleanup, context = null, domain = require('domain').active) -
   cleanup(context) if cleanup? and context?
   domain.__context__ = null if domain?
 
-exports.onError = (onError, context = null, domain = require('domain').active) ->
+exports.onError = (err, onError, context = null, domain = require('domain').active) ->
   context = context or domain.__context__
-  onError(context) if onError?
+  onError(err, context) if onError?
   domain.__context__ = null
 
 exports.get = (key, domain = require('domain').active) ->
@@ -31,9 +31,9 @@ exports.run = (options, func) ->
   domain.on 'dispose', ->
     exports.cleanup(cleanup, domain)
 
-  domain.on 'error', ->
+  domain.on 'error', (err) ->
     if onError?
-      exports.onError(onError, null, domain)
+      exports.onError(err, onError, null, domain)
     else
       exports.cleanup(cleanup, domain)
 
@@ -83,7 +83,7 @@ exports.middlewareOnError = (onError) ->
     {onError} = onError if typeof onError != 'function'
 
     if onError?
-      exports.onError(onError, req.__context__)
+      exports.onError(err, onError, req.__context__)
     else
       exports.cleanup(onError, req.__context__)
 
