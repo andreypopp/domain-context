@@ -1,8 +1,8 @@
 domain = require 'domain'
 
-exports.init = (init, domain = require('domain').active) ->
+exports.context = (context, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
-  domain.__context__ = init()
+  domain.__context__ = if context? then context() else {}
 
 exports.cleanup = (cleanup, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
@@ -17,13 +17,17 @@ exports.get = (key, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
   domain.__context__[key]
 
-exports.run = (func, options) ->
-  {init, cleanup, onError} = options
+exports.run = (options, func) ->
+  func = options if not func
+  {context, cleanup, onError} = options
   domain = options.domain or require('domain').active
   domain.on 'dispose', -> exports.cleanup(cleanup, domain)
   domain.on 'error', -> exports.onError(onError, null, domain)
-  exports.init(init, domain)
-  domain.run(func)
+  exports.context(context, domain)
+  try
+    domain.bind(func, true)()
+  catch err
+    domain.emit 'error', err
   domain
 
 exports.runInNewDomain = (func, options) ->
@@ -33,11 +37,11 @@ exports.runInNewDomain = (func, options) ->
     currentDomain.add(options.domain)
   exports.run(func, options)
 
-exports.middleware = (init, cleanup) ->
+exports.middleware = (context, cleanup) ->
   (req, res, next) ->
-    {init, cleanup} = init if typeof init != 'function'
+    {context, cleanup} = context if typeof context != 'function'
     domain = require('domain').active
-    exports.init(init, domain)
+    exports.context(context, domain)
     res.on 'finish', -> exports.cleanup(cleanup, domain)
     req.__context__ = domain.__context__
     next()
