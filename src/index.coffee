@@ -17,14 +17,21 @@ exports.get = (key, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
   domain.__context__[key]
 
-exports.run = (func, lifecycle) ->
-  {init, cleanup, onError} = lifecycle
-  domain = require('domain').active
+exports.run = (func, options) ->
+  {init, cleanup, onError} = options
+  domain = options.domain or require('domain').active
   domain.on 'dispose', -> exports.cleanup(cleanup, domain)
   domain.on 'error', -> exports.onError(onError, null, domain)
   exports.init(init, domain)
   domain.run(func)
   domain
+
+exports.runInNewDomain = (func, options) ->
+  currentDomain = require('domain').active
+  options.domain = require('domain').create()
+  if not options.detach and currentDomain
+    currentDomain.add(options.domain)
+  exports.run(func, options)
 
 exports.middleware = (init, cleanup) ->
   (req, res, next) ->
