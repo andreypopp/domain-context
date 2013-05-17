@@ -17,6 +17,14 @@ exports.get = (key, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
   domain.__context__[key]
 
+exports.run = (func, lifecycle) ->
+  {init, cleanup, onError} = lifecycle
+  domain = require('domain').active
+  domain.on 'dispose', -> exports.cleanup(cleanup, domain)
+  domain.on 'error', -> exports.onError(onError, null, domain)
+  exports.init(init, domain)
+  domain.run(func)
+
 exports.middleware = (init, cleanup) ->
   (req, res, next) ->
     {init, cleanup} = init if typeof init != 'function'
