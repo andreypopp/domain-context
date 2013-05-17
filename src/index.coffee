@@ -24,6 +24,7 @@ exports.run = (func, lifecycle) ->
   domain.on 'error', -> exports.onError(onError, null, domain)
   exports.init(init, domain)
   domain.run(func)
+  domain
 
 exports.middleware = (init, cleanup) ->
   (req, res, next) ->

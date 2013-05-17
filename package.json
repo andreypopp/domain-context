@@ -1,7 +1,7 @@
 {
-  "name": "connect-reqcontext",
+  "name": "domain-context",
   "version": "0.1.0",
-  "description": "Globally accessible request context for connect",
+  "description": "Globally accessible domain-bound contexts",
   "main": "lib/index.js",
   "dependencies": {},
   "devDependencies": {
@@ -12,9 +12,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/andreypopp/connect-reqcontext.git"
+    "url": "git://github.com/andreypopp/domain-context.git"
   },
-  "homepage": "https://github.com/andreypopp/connect-reqcontext",
+  "homepage": "https://github.com/andreypopp/domain-context",
   "keywords": [
     "connect",
     "express",
