@@ -17,3 +17,8 @@ exports.requestContextOnError = (cleanup) ->
     cleanup(req.__context__) if cleanup?
     domain.__context__ = req.__context__ = null
     next(err)
+
+exports.get = (key) ->
+  domain = require('domain').active
+  throw new Error('no active domain') unless domain?
+  domain.__context__[key]
