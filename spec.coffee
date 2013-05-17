@@ -59,7 +59,48 @@ describe 'run()', ->
         done()
         ), 20
 
-describe.skip 'runInNewDomain()', ->
-describe.skip 'runInNewDomain() with options.detach', ->
+describe 'runInNewDomain()', ->
+
+  it 'runs a func in a new domain', ->
+    domain = runInNewDomain ->
+      equal require('domain').active, domain
+    domain.dispose()
+
+  it 'nestes a new domain to a current one if latter is present', ->
+    parentDomain = require('domain').create()
+
+    disposed = false
+    errorCalled = false
+
+    parentDomain.on 'error', ->
+      errorCalled = true
+
+    parentDomain.run ->
+      domain = runInNewDomain ->
+        throw new Error('x')
+      domain.on 'dispose', ->
+        disposed = true
+      ok errorCalled
+    parentDomain.dispose()
+    ok disposed
+
+  it 'does not nest domain if detach option is provided', ->
+    parentDomain = require('domain').create()
+
+    disposed = false
+    errorCalled = false
+
+    parentDomain.on 'error', ->
+      errorCalled = true
+
+    parentDomain.run ->
+      domain = runInNewDomain {detach: true}, ->
+        throw new Error('x')
+      domain.on 'dispose', ->
+        disposed = true
+      ok not errorCalled
+    parentDomain.dispose()
+    ok not disposed
+
 describe.skip 'middleware()', ->
 describe.skip 'middleware() with middlewareOnError()', ->

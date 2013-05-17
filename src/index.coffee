@@ -18,9 +18,13 @@ exports.get = (key, domain = require('domain').active) ->
   domain.__context__[key]
 
 exports.run = (options, func) ->
+  if not func
+    func = options
+    options = {}
   func = options if not func
   {context, cleanup, onError} = options
   domain = options.domain or require('domain').active
+  throw new Error('no active domain') unless domain
   domain.on 'dispose', -> exports.cleanup(cleanup, domain)
   domain.on 'error', -> exports.onError(onError, null, domain)
   exports.context(context, domain)
@@ -30,12 +34,19 @@ exports.run = (options, func) ->
     domain.emit 'error', err
   domain
 
-exports.runInNewDomain = (func, options) ->
+exports.runInNewDomain = (options, func) ->
+  if not func
+    func = options
+    options = {}
   currentDomain = require('domain').active
   options.domain = require('domain').create()
   if not options.detach and currentDomain
     currentDomain.add(options.domain)
-  exports.run(func, options)
+    options.domain.on 'error', (err) ->
+      currentDomain.emit 'error', err
+    currentDomain.on 'dispose', ->
+      options.domain.dispose()
+  exports.run(options, func)
 
 exports.middleware = (context, cleanup) ->
   (req, res, next) ->
