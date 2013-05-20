@@ -29,13 +29,13 @@ exports.run = (options, func) ->
   throw new Error('no active domain') unless domain
 
   domain.on 'dispose', ->
-    exports.cleanup(cleanup, domain)
+    exports.cleanup(cleanup, null, domain)
 
   domain.on 'error', (err) ->
     if onError?
       exports.onError(err, onError, null, domain)
     else
-      exports.cleanup(cleanup, domain)
+      exports.cleanup(cleanup, null, domain)
 
   exports.context(context, domain)
 
@@ -73,7 +73,7 @@ exports.middleware = (context, cleanup) ->
     exports.context(context, domain)
 
     res.on 'finish', ->
-      exports.cleanup(cleanup, domain)
+      exports.cleanup(cleanup, null, domain)
 
     req.__context__ = domain.__context__
     next()
@@ -81,7 +81,6 @@ exports.middleware = (context, cleanup) ->
 exports.middlewareOnError = (onError) ->
   (err, req, res, next) ->
     {onError} = onError if typeof onError != 'function'
-
     if onError?
       exports.onError(err, onError, req.__context__)
     else
