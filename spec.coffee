@@ -152,18 +152,6 @@ describe 'middleware()', ->
         ok cleanupCalled
         done()
 
-  it 'calls cleanup on error if no onError is provided', (done) ->
-    cleanupCalled = false
-    app = configureApp
-      cleanup: -> cleanupCalled = true
-      handler: (req, res) ->
-        throw new Error('x')
-    request(app)
-      .get('/')
-      .expect 500, ->
-        ok cleanupCalled
-        done()
-
   it 'calls onError sync throw', (done) ->
     onErrorCalled = false
     app = configureApp
