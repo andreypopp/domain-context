@@ -1,0 +1,92 @@
+<!doctype html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+<title>domain-context</title>
+<link rel="stylesheet" href="_static/default.css" type="text/css" />
+<script src="_static/jquery.js"></script>
+<script src="_static/jquery.lettering.js"></script>
+<script>
+  $(function() {
+    var $headers = $('h1');
+    $headers.lettering('words').children('span').lettering();
+    $headers.children('span').children('span:contains("¶")').remove();
+  });
+</script>
+<div class="main">
+  
+  <div class="section" id="domain-context">
+<h1>domain-context<a class="headerlink" href="#domain-context" title="Permalink to this headline">¶</a></h1>
+<p>Globally accessible domain-bound contexts, connect/express middleware included</p>
+<p>This module uses Node.js <a class="reference external" href="http://nodejs.org/api/domain.html">domains</a> to store and query data, thus mimicing
+thread-local storage in other languages (e.g. in Python).</p>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Install <tt class="docutils literal"><span class="pre">domain-context</span></tt> with <tt class="docutils literal"><span class="pre">npm</span></tt>:</p>
+<div class="highlight-python"><pre>% npm install domain-context</pre>
+</div>
+<p>And <tt class="docutils literal"><span class="pre">require('domain-context')</span></tt> in your code.</p>
+</div>
+<div class="section" id="rationale">
+<h2>Rationale<a class="headerlink" href="#rationale" title="Permalink to this headline">¶</a></h2>
+<p>You need to have an access to some data inside your functions — usually you
+would pass such data as an argument.</p>
+<p>But when you need to have an access &#8220;everywhere&#8221;, e.g. access to a currently
+active database connection through the duration of HTTP request, you probably
+don&#8217;t want to &#8220;poison&#8221; your function definitions and function calls with
+boilerplate arguments.</p>
+<p>That the place where <tt class="docutils literal"><span class="pre">domain-context</span></tt> library comes handy. It allows basically
+to database connection in the currently active domain and automatically perform
+cleanup actions on the domain&#8217;s disposal. Your code could have access to the
+stored database connection as long as it is running inside the domain.</p>
+</div>
+<div class="section" id="connect-express-middleware">
+<h2>Connect/express middleware<a class="headerlink" href="#connect-express-middleware" title="Permalink to this headline">¶</a></h2>
+<p>The middleware can only be used inside an active domain, use
+<a class="reference external" href="https://github.com/baryshev/connect-domain">connect-domain</a> middleware to create one:</p>
+<div class="highlight-python"><pre>var connectDomain = require('connect-domain'),
+    domainContext = require('domain-context'),
+    express = require('express');
+
+var lifecycle = {
+  context: function() {
+    return {db: new pg.Client(...)}
+  },
+  cleanup: function(context) {
+    context.db.query('commit');
+    context.db.end();
+  },
+  onError: function(err, context) {
+    context.db.query('rollback');
+    context.db.end();
+  }
+};
+
+app = express();
+app.use(connectDomain());
+app.use(domainContext.middleware(lifecycle));
+// your applicaiton's middleware goes here
+app.use(domainContext.middlewareOnError(lifecycle));</pre>
+</div>
+<p>Note that because of connect/express design you are required to place two
+middlewares around your application — <tt class="docutils literal"><span class="pre">domainContext.middleware()</span></tt> and
+<tt class="docutils literal"><span class="pre">domainContext.middlewareOnError()</span></tt>.</p>
+<p>Now you can use <tt class="docutils literal"><span class="pre">domainContext.get()</span></tt> to query data from the currently active
+domain:</p>
+<div class="highlight-python"><pre>var domainContext = require('connect-reqcontext');
+
+function getUserById(id, cb) {
+  domainContext.get('db').query("select ...", cb);
+}</pre>
+</div>
+</div>
+</div>
+
+
+  <footer>
+    <p>domain-context 0.4.1</p>
+    <p>Generated using Sphinx 1.2b1</p>
+  </footer>
+</div>
+</div>
+<a class="github-ribbon" href="https://github.com/andreypopp/domain-context">
+  <img src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub">
+</a>
