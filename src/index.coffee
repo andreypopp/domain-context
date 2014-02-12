@@ -18,6 +18,10 @@ exports.get = (key, domain = require('domain').active) ->
   throw new Error('no active domain') unless domain?
   domain.__context__[key]
 
+exports.set = (key, value, domain = require('domain').active) ->
+  throw new Error('no active domain') unless domain?
+  domain.__context__[key] = value
+
 exports.run = (options, func) ->
   if not func
     func = options

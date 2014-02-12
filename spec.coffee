@@ -29,6 +29,14 @@ describe 'run()', ->
         equal get('c'), undefined
     domain.dispose()
 
+  it 'allows setting the context with set() and getting values with get()', ->
+    domain = require('domain').create()
+    domain.run ->
+      run {}, ->
+        set('foo', 'bar')
+        equal get('foo'), 'bar'
+    domain.dispose()
+
   it 'calls cleanup callback on dispose', ->
     cleanupCalled = false
     domain = require('domain').create()
